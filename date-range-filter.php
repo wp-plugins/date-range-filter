@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Date range filter
  * Description: Easily filter the admin list of post and custom post type with a date range
- * Version: 0.0.1
+ * Version: 0.0.2
  * Author: Jonathan Bardo
  * License: GPLv2+
  * Text Domain: date-range-filter
@@ -14,19 +14,22 @@ class Date_Range_Filter {
 	/**
 	 * Holds the plugin version number
 	 */
-	const VERSION = '0.0.1';
+	const VERSION = '0.0.2';
 
 	/**
 	 * Object constructor
 	 */
 	public static function setup() {
+		// I heard you like to extend plugins?
+		static::$class = get_called_class();
+
 		define( 'DATE_RANGE_FILTER_DIR',     plugin_dir_path( __FILE__ ) );
 		define( 'DATE_RANGE_FILTER_URL',     plugin_dir_url( __FILE__ ) );
 		define( 'DATE_RANGE_FILTER_INC_DIR', DATE_RANGE_FILTER_DIR . 'includes/' );
 
-		add_action( 'restrict_manage_posts', array( __CLASS__, 'add_daterange_select' ) );
-		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_menu_scripts' ) );
-		add_filter( 'pre_get_posts',         array( __CLASS__, 'filter_main_query' ), 10, 1 );
+		add_action( 'restrict_manage_posts', array( static::$class, 'add_daterange_select' ) );
+		add_action( 'admin_enqueue_scripts', array( static::$class, 'admin_menu_scripts' ) );
+		add_filter( 'pre_get_posts',         array( static::$class, 'filter_main_query' ), 10, 1 );
 	}
 
 	/**
@@ -216,18 +219,18 @@ class Date_Range_Filter {
 			is_admin()
 			&& $wp_query->is_main_query()
 			&& 'edit.php' === $pagenow
-			&& isset( $_GET[ 'date_from' ] ) && ! empty( $_GET[ 'date_from' ] )
-		    && isset( $_GET[ 'date_to' ] ) && ! empty( $_GET[ 'date_to' ] )
+			&& isset( $_GET['date_from'] ) && ! empty( $_GET['date_from'] )
+			&& isset( $_GET['date_to'] ) && ! empty( $_GET['date_to'] )
 		) {
-			$from = explode( '/', $_GET[ 'date_from' ] );
-			$to   = explode( '/', $_GET[ 'date_to' ] );
+			$from = explode( '/', sanitize_text_field( $_GET['date_from'] ) );//input var okay
+			$to   = explode( '/', sanitize_text_field( $_GET['date_to'] ) );//input var ok
 
 			$from = array_map( 'intval', $from );
 			$to   = array_map( 'intval', $to );
 
 			if (
-				count( $to ) === 3
-				&& count( $from ) === 3
+				3 === count( $to )
+				&& 3 === count( $from )
 			) {
 				list( $year_from, $month_from, $day_from ) = $from;
 				list( $year_to, $month_to, $day_to )       = $to;
